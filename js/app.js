@@ -368,15 +368,25 @@ function runLevel(level, Display){
   });//end promise
 }
 
+let playerLife = 3;
 async function runGame(plans, Display){
   let level = 0;
   while(level < plans.length){
     let status = await runLevel(new Level(plans[level]), Display);
     if(status == 'won'){
       level++;
+    } else if(status == 'lost'){
+      playerLife -= 1;
+      console.log(`Your life is at: ${playerLife}`);
+    }
+    if(playerLife == 0){
+      console.log("You've lost...");
+      break;
     }
   }
-  console.log("You've won!");
+  if(status == 'won'){
+    console.log("You've won!");
+  }
 }
 
 //displaying the level with methods defined
