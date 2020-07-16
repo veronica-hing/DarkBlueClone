@@ -2,12 +2,21 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+    <link href="https://fonts.googleapis.com/css2?family=Staatliches&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <title>Dark Blue Clone</title>
   </head>
   <script src = 'js/app.js'></script>
   <script src = 'js/gameLevels.js'></script>
   <body>
+    <div class="statBar">
+      <div class="stat life">
+        <span>Life: </span><span id = "hp"></span>
+      </div>
+      <div class="stat coins">
+        <span>Coins: </span><span id = "totalCoin"></span>
+      </div>
+    </div>
     <script>
       runGame(GAME_LEVELS, DOMDisplay);
     </script>

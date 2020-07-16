@@ -56,15 +56,18 @@ Level.prototype.touches = function(pos,size,type){
   return false;
 };
 
+
+
 class State{
-  constructor(level, actors, status){
+  constructor(level, actors, status, coins){
     this.level = level;
     this.actors = actors;
     this.status = status;//changes to lost or won when game ends
+    this.coins = coins;
   }
 
-  static start(level){
-    return new State(level, level.startActors, 'playing');
+  static start(level,startCoins){
+    return new State(level, level.startActors, 'playing', startCoins);
   }//makes this a persistent data structure-updates create new states and leave the old one intact
 
   get player(){
@@ -73,7 +76,7 @@ class State{
 }// end state class. contains level, actors, and status
 State.prototype.update = function(time, keys){
   let actors = this.actors.map(actor => actor.update(time, this, keys));
-  let newState = new State(this.level, actors, this.status);
+  let newState = new State(this.level, actors, this.status, this.coins);
 
   if(newState.status != 'playing'){
     return newState;
@@ -81,7 +84,7 @@ State.prototype.update = function(time, keys){
 
   let player = newState.player;
   if(this.level.touches(player.pos, player.size, 'lava')){
-    return new State(this.level, actors, 'lost');
+    return new State(this.level, actors, 'lost', this.coins);
   }
 
   for(let actor of actors){
@@ -173,7 +176,7 @@ class Lava{
 }
 Lava.prototype.size = new Vec(1,1);
 Lava.prototype.collide = function(state){
-  return new State(state.level, state.actors, 'lost');
+  return new State(state.level, state.actors, 'lost', state.coins);
 };
 Lava.prototype.update = function(time, state){
   let newPos = this.pos.plus(this.speed.times(time));
@@ -215,9 +218,9 @@ class Monster{
       let filtered = state.actors.filter(a => a != this);//remove itself
       let bounceOff = new Vec(player.speed.x, (-1*player.speed.y));
       player.speed = bounceOff;
-      return new State(state.level, filtered, 'playing');
+      return new State(state.level, filtered, 'playing', state.coins);
     }
-    return new State(state.level, state.actors, 'lost');
+    return new State(state.level, state.actors, 'lost', state.coins);
   }
 }
 Monster.prototype.size = new Vec(1.2, 2);
@@ -239,12 +242,14 @@ class Coin{
 }
 Coin.prototype.size = new Vec(0.6, 0.6);
 Coin.prototype.collide = function(state){
+  state.coins+=1;
+  document.getElementById('totalCoin').innerHTML = state.coins;
   let filtered = state.actors.filter(a => a != this);
   let status = state.status;
   if(!filtered.some(a => a.type == 'coin')){
     status = 'won';
   }
-  return new State(state.level, filtered, status);
+  return new State(state.level, filtered, status, state.coins);
 };
 Coin.prototype.update = function(time){
   let wobble = this.wobble + time * wobbleSpeed;
@@ -388,7 +393,7 @@ function runAnimation(frameFunc){
 
 function runLevel(level, Display){
   let display = new Display(document.body, level);
-  let state = State.start(level);
+  let state = State.start(level,0);//0 is how many coins you start with
   let ending = 1;
   return new Promise(resolve => {
     runAnimation(time => {
@@ -408,16 +413,23 @@ function runLevel(level, Display){
   });//end promise
 }
 
-let playerLife = 3;
+
+
 async function runGame(plans, Display){
+  let playerHP = document.getElementById('hp');
   let level = 0;
+  let playerLife = 3;
+  playerHP.innerHTML = playerLife;
+  //while starts the game
   while(level < plans.length){
     let status = await runLevel(new Level(plans[level]), Display);
     if(status == 'won'){
       level++;
+      document.getElementById('totalCoin').innerHTML = 0;//reset your coin count immediately
     } else if(status == 'lost'){
       playerLife -= 1;
-      console.log(`Your life is at: ${playerLife}`);
+      playerHP.innerHTML = playerLife;
+      document.getElementById('totalCoin').innerHTML = 0;//reset your coin count immediately
       if(playerLife == 0){
         console.log("Last chance!");
       }
@@ -431,8 +443,3 @@ async function runGame(plans, Display){
     console.log("You've won!");
   }
 }
-
-//displaying the level with methods defined
-//let simpleLevel = new Level(simpleLevelPlan);
-//let display = new DOMDisplay(document.body, simpleLevel);
-//display.syncState(State.start(simpleLevel));

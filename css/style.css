@@ -1,3 +1,25 @@
+*{
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+
+}
+
+.statBar{
+  width: 600px;
+  margin-top: 50px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 10px;
+  background: pink;
+  font-family: 'Staatliches';
+}
+
+.stat{
+  display: inline-block;
+  width: 40%;
+}
+
 /*--------------map/background---------------*/
 .background{
   background: rgb(52, 166, 251);
@@ -20,6 +42,7 @@
 
 .coin{
   background: rgb(241, 229, 89);
+  border-radius: 50%;
 }
 
 .lava{
