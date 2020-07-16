@@ -5,7 +5,8 @@
   O chars are coins
   = are horizontal bouncy lava
   | vertical bouncy lava
-  v drippy lava*/
+  v drippy lava
+  m monster that behaves like horizontal lava*/
   //Purpose of game: collect all coins without touching lava
 let simpleLevelPlan = `
 ......................
@@ -45,8 +46,8 @@ Level.prototype.touches = function(pos,size,type){
 
   for(var y = yStart; y < yEnd; y++){
     for(var x = xStart; x < xEnd; x++){
-      let isOUtside = x < 0 || x >= this.width || y < 0 || y >= this.height;
-      let here = isOUtside ? 'wall' : this.rows[y][x];
+      let isOutside = x < 0 || x >= this.width || y < 0 || y >= this.height;
+      let here = isOutside ? 'wall' : this.rows[y][x];
       if (here ==type){
         return true;
       }
@@ -165,6 +166,8 @@ class Lava{
       return new Lava(pos, new Vec(0,2));
     } else if (ch == 'v') {
       return new Lava(pos, new Vec(0,3), pos);
+    } else if (ch == '+') {
+      return new Lava(pos, new Vec(0,0));
     }
   }
 }
@@ -182,6 +185,42 @@ Lava.prototype.update = function(time, state){
     return new Lava(this.pos, this.speed.times(-1));
   }//bouncy lava
 };
+
+class Monster{
+  constructor(pos, speed){
+    this.pos = pos;
+    this.speed = speed;
+  }
+
+  get type(){return 'monster';}
+
+  static create(pos){
+    return new Monster(pos.plus(new Vec(0,-1)), new Vec(2,0));
+  }
+
+  update(time, state){
+    let newPos = this.pos.plus(this.speed.times(time));
+    if(!state.level.touches(newPos, this.size, 'wall')){
+      return new Monster(newPos, this.speed);//didn't hit wall, so keeps going
+    } else {
+      return new Monster(this.pos, this.speed.times(-1));//hits wall so bounces back
+    }
+  }
+
+  collide(state){
+    let playerList = state.actors.filter(a => a.type == 'player');//returns an array
+    let player = playerList[0];// is shallow copy of the actors list
+
+    if(player.pos.y < this.pos.y){//lower y value is closer to "top"
+      let filtered = state.actors.filter(a => a != this);//remove itself
+      let bounceOff = new Vec(player.speed.x, (-1*player.speed.y));
+      player.speed = bounceOff;
+      return new State(state.level, filtered, 'playing');
+    }
+    return new State(state.level, state.actors, 'lost');
+  }
+}
+Monster.prototype.size = new Vec(1.2, 2);
 
 const wobbleSpeed = 8, wobbleDist = 0.07;
 class Coin{
@@ -217,12 +256,13 @@ Coin.prototype.update = function(time){
 const levelChars = {
   '.': 'empty',
   '#': 'wall',
-  '+': 'Lava',
+  '+': Lava,
   '@': Player,
   'o': Coin,
   '=': Lava,
   '|': Lava,
-  'v': Lava
+  'v': Lava,
+  'm': Monster
 };
 
 /*--------Displaying everything--------------------*/
@@ -378,8 +418,11 @@ async function runGame(plans, Display){
     } else if(status == 'lost'){
       playerLife -= 1;
       console.log(`Your life is at: ${playerLife}`);
+      if(playerLife == 0){
+        console.log("Last chance!");
+      }
     }
-    if(playerLife == 0){
+    if(playerLife < 0){
       console.log("You've lost...");
       break;
     }

@@ -9,10 +9,6 @@
   padding: 0;
 }
 
-.lava{
-  background: rgb(255, 100, 100);
-}
-
 .wall{
   background: white;
 }
@@ -24,6 +20,14 @@
 
 .coin{
   background: rgb(241, 229, 89);
+}
+
+.lava{
+  background: rgb(255, 100, 100);
+}
+
+.monster{
+  background: purple;
 }
 
 .player{
